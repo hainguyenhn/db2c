@@ -33,15 +33,15 @@ typedef struct tpd_entry_def
 } tpd_entry;
 
 /* Table packed descriptor list = 4+4+4+36 = 48 bytes.  When no
-   table is defined the tpd_list is 48 bytes.  When there is
+   table is defined the tpd_list is 48 bytes.  When there is 36
 	 at least 1 table, then the tpd_entry (36 bytes) will be
 	 overlapped by the first valid tpd_entry. */
 typedef struct tpd_list_def
 {
-	int				list_size;
-	int				num_tables;
-	int				db_flags;
-	tpd_entry	tpd_start;
+	int				list_size;  //4
+	int				num_tables; //4
+	int				db_flags;   //4
+	tpd_entry	tpd_start;      //36
 }tpd_list;
 
 /* This token_list definition is used for breaking the command
@@ -138,7 +138,8 @@ typedef enum s_statement
 	CREATE_TABLE = 100,				// 100
 	DROP_TABLE,								// 101
 	LIST_TABLE,								// 102
-	LIST_SCHEMA,							// 103
+	LIST_SCHEMA,
+	INSERT_TABLE,							// 103
   INSERT,                   // 104
   DELETE,                   // 105
   UPDATE,                   // 106
@@ -167,23 +168,17 @@ typedef enum error_return_codes
 	MEMORY_ERROR							  // -297
 } return_codes;
 
-//table header
+/* Table header structure */
 typedef struct table_file_header_def
 {
+	int			file_size;			// 4 bytes
+	int			record_size;			// 4 bytes
+	int			num_records;			// 4 bytes
+	int			record_offset;			// 4 bytes
+	int			file_header_flag;		// 4 bytes
+	tpd_entry		*tpd_ptr;			// 4 bytes
+} table_file_header;					// minimum size = 24
 
-int file_size; // 4 bytes
-
-int record_size; // 4 bytes
-
-int num_records; // 4 bytes
-
-int record_offset; // 4 bytes
-
-int file_header_flag; // 4 bytes
-
-tpd_entry *tpd_ptr; // 4 bytes
-
-} table_file_header; // minimum size = 24
 
 /* Set of function prototypes */
 int get_token(char *command, token_list **tok_list);
@@ -193,6 +188,8 @@ int sem_create_table(token_list *t_list);
 int sem_drop_table(token_list *t_list);
 int sem_list_tables();
 int sem_list_schema(token_list *t_list);
+int sem_insert_table(token_list *t_list);
+int create_table_file_header(tpd_entry *tpd, int rs);
 
 /*
 	Keep a global list of tpd - in real life, this will be stored
